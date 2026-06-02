@@ -1,4 +1,4 @@
-import { Application } from 'pixi.js';
+import { Application, Assets } from 'pixi.js';
 import { ScrollList } from '../components/ScrollList';
 
 export class GameApp {
@@ -9,7 +9,7 @@ export class GameApp {
         this.init();
     }
 
-private async init() {
+    private async init() {
         this.app = new Application();
         
         await this.app.init({
@@ -21,10 +21,25 @@ private async init() {
 
         document.body.appendChild(this.app.canvas);
 
-        this.scrollList = new ScrollList(this.app);
-        this.app.stage.addChild(this.scrollList); 
-        this.scrollList.drawAllItems(); 
+        const gamesData: any[] = [];
+        Array.from({ length: 20 }).forEach((_, index) => {
+            const idNum = index + 1;
+            gamesData.push({
+                id: String(idNum),
+                title: `Title`,
+                image: `https://picsum.photos/id/${idNum}/200/300.jpg`,
+                url: `https://picsum.photos/id/${idNum}/200/300`
+            });
+        });
 
+        const imageUrls = gamesData.map(game => game.image);
+        
+        await Assets.load(imageUrls); 
+
+        this.scrollList = new ScrollList(this.app, gamesData);
+        this.app.stage.addChild(this.scrollList); 
+
+        this.scrollList.drawAllItems(); 
         this.app.render(); 
 
         window.addEventListener('resize', () => this.onResize());

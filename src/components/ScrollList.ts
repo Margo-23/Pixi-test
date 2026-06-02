@@ -4,6 +4,7 @@ import { ScrollItem } from './ScrollItem';
 export class ScrollList extends Container {
     private app: Application;
     private items: ScrollItem[] = [];
+    private gamesData: any[]; // Храним данные тут
     
     private itemWidth = 140;
     private itemHeight = 220;
@@ -17,51 +18,50 @@ export class ScrollList extends Container {
     private lastX = 0;
     private friction = 0.95;
 
-    constructor(app: Application) {
+        constructor(app: Application, gamesData: any[]) {
         super();
         this.app = app;
+        this.gamesData = gamesData;
         
         this.createItems();
         this.setupInteractions();
         this.resize(window.innerWidth, window.innerHeight);
+
         this.app.ticker.add((ticker) => this.update(ticker.deltaTime));
     }
 
-private createItems() {
-    for (let i = 0; i < 20; i++) {
-        const item = new ScrollItem(i, this.itemWidth, this.itemHeight);
-        this.addChild(item);
-        this.items.push(item);
+    private createItems() {
+        this.gamesData.forEach((data, index) => {
+            const item = new ScrollItem(index, this.itemWidth, this.itemHeight, data);
+            this.addChild(item);
+            this.items.push(item);
+        });
+        this.updateItemsPositions();
     }
-    this.updateItemsPositions();
-}
 
-private updateItemsPositions() {
-    this.items.forEach((item, index) => {
-        item.x = this.currentX + index * (this.itemWidth + this.spacing);
-        item.y = (window.innerHeight - this.itemHeight) / 2;
-    });
-}
+    private updateItemsPositions() {
+        this.items.forEach((item, index) => {
+            item.x = this.currentX + index * (this.itemWidth + this.spacing);
+            item.y = (window.innerHeight - this.itemHeight) / 2;
+        });
+    }
 
-private setupInteractions() {
+    private setupInteractions() {
         this.app.stage.eventMode = 'static';
         this.app.stage.hitArea = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
 
         this.app.stage.on('pointerdown', (e) => {
             this.isDragging = true;
-            this.velocity = 0; 
+            this.velocity = 0;
             this.startX = e.global.x - this.currentX;
             this.lastX = e.global.x;
         });
 
         this.app.stage.on('pointermove', (e) => {
             if (!this.isDragging) return;
-            
             this.currentX = e.global.x - this.startX;
-            
             this.velocity = e.global.x - this.lastX;
             this.lastX = e.global.x;
-            
             this.updateItemsPositions();
         });
 
@@ -76,11 +76,8 @@ private setupInteractions() {
         }, { passive: true });
     }
 
-private update(deltaTime: number) {
-        if (this.isDragging) {
-            this.velocity *= Math.pow(0.8, deltaTime); 
-        return;
-        }
+    private update(deltaTime: number) {
+        if (this.isDragging) return;
 
         if (isNaN(this.velocity)) {
             this.velocity = 0;
@@ -119,5 +116,4 @@ private update(deltaTime: number) {
     public drawAllItems() {
         this.items.forEach(item => item.draw());
     }
-    
 }
